@@ -1,0 +1,729 @@
+/* ==========================================================================
+   APEX VELOCITY 3D - High Octane Modern Racing Design System
+   ========================================================================== */
+
+:root {
+  --primary-accent: #ff2a4b;
+  --primary-glow: rgba(255, 42, 75, 0.45);
+  --secondary-accent: #00f0ff;
+  --secondary-glow: rgba(0, 240, 255, 0.4);
+  --warning-accent: #ffb703;
+  --bg-dark: #080a0f;
+  --panel-bg: rgba(14, 18, 28, 0.82);
+  --panel-border: rgba(255, 255, 255, 0.14);
+  --panel-glow: 0 8px 32px 0 rgba(0, 0, 0, 0.65);
+  --text-main: #f0f4fc;
+  --text-muted: #8e9bb4;
+  --font-racing: 'Orbitron', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Rajdhani', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg-dark);
+  font-family: var(--font-body);
+  color: var(--text-main);
+}
+
+#game-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+#game-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ==========================================================================
+   Visual Effects Overlays
+   ========================================================================== */
+
+/* Radial high-speed motion blur lines */
+.speed-lines {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  opacity: 0;
+  transition: opacity 0.2s ease-out;
+  background: radial-gradient(circle at center, transparent 45%, rgba(255, 255, 255, 0.12) 80%, rgba(255, 255, 255, 0.28) 100%);
+  mix-blend-mode: screen;
+}
+
+/* Collision Flash */
+.collision-flash {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 6;
+  opacity: 0;
+  background: rgba(255, 42, 75, 0.35);
+  transition: opacity 0.08s ease-out;
+}
+
+/* ==========================================================================
+   Heads-Up Display (HUD)
+   ========================================================================== */
+
+/* Global Utility: Hidden */
+.hidden {
+  display: none !important;
+}
+
+.hud {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 24px 32px;
+  transition: opacity 0.3s ease;
+}
+
+.hud.hidden {
+  display: none !important;
+}
+
+/* Glassmorphic HUD Cards */
+.hud-card {
+  background: var(--panel-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  box-shadow: var(--panel-glow);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hud-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.hud-label {
+  font-family: var(--font-racing);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+}
+
+.hud-label-sm {
+  font-family: var(--font-racing);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+.hud-value {
+  font-family: var(--font-racing);
+  font-size: 1.9rem;
+  font-weight: 900;
+  color: #fff;
+  line-height: 1;
+}
+
+.hud-value-sm {
+  font-family: var(--font-racing);
+  font-size: 0.85rem;
+  color: var(--secondary-accent);
+}
+
+.hud-sub {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+}
+
+.pos-highlight {
+  color: var(--primary-accent);
+  text-shadow: 0 0 16px var(--primary-glow);
+}
+
+.lap-badge {
+  border-left: 4px solid var(--secondary-accent);
+}
+
+.pos-badge {
+  border-right: 4px solid var(--primary-accent);
+}
+
+.timer-card {
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.timer-digits {
+  color: #fff;
+  letter-spacing: 1px;
+}
+
+/* Center Announcements & Countdown */
+.hud-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  text-align: center;
+}
+
+.countdown-banner {
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.countdown-text {
+  font-family: var(--font-racing);
+  font-size: 7rem;
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow: 0 0 40px var(--secondary-accent), 0 0 80px rgba(0, 240, 255, 0.6);
+  letter-spacing: 4px;
+  animation: popScale 0.8s ease-out infinite;
+}
+
+@keyframes popScale {
+  0% { transform: scale(0.6); opacity: 0; }
+  40% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.95; }
+}
+
+.drift-notification {
+  background: linear-gradient(90deg, transparent, rgba(255, 183, 3, 0.3), transparent);
+  padding: 8px 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.drift-title {
+  font-family: var(--font-racing);
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: var(--warning-accent);
+  letter-spacing: 4px;
+  text-shadow: 0 0 12px rgba(255, 183, 3, 0.7);
+}
+
+.drift-pts {
+  font-family: var(--font-racing);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.wrong-way-banner {
+  background: rgba(255, 42, 75, 0.85);
+  backdrop-filter: blur(8px);
+  padding: 12px 36px;
+  border-radius: 8px;
+  font-family: var(--font-racing);
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 3px;
+  animation: pulseRed 0.6s infinite alternate;
+}
+
+@keyframes pulseRed {
+  from { transform: scale(0.95); opacity: 0.8; }
+  to { transform: scale(1.05); opacity: 1; text-shadow: 0 0 20px #fff; }
+}
+
+.lap-announcement {
+  background: rgba(0, 240, 255, 0.25);
+  border: 1px solid var(--secondary-accent);
+  backdrop-filter: blur(12px);
+  padding: 16px 48px;
+  border-radius: 12px;
+  font-family: var(--font-racing);
+  font-size: 2.2rem;
+  font-weight: 900;
+  letter-spacing: 4px;
+  color: #fff;
+  box-shadow: 0 0 30px var(--secondary-glow);
+  animation: popScale 1.2s ease-out forwards;
+}
+
+/* ==========================================================================
+   Bottom Dashboard & Gauges
+   ========================================================================== */
+
+.hud-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  width: 100%;
+}
+
+/* Mini-Map Radar */
+.minimap-container {
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  background: rgba(10, 14, 22, 0.88);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.15);
+}
+
+.minimap-title {
+  font-family: var(--font-racing);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--secondary-accent);
+  margin-bottom: 6px;
+}
+
+#minimap-canvas {
+  border-radius: 8px;
+  background: rgba(4, 7, 12, 0.7);
+}
+
+/* Controls Pill Helper */
+.hud-controls-helper {
+  background: rgba(14, 18, 28, 0.7);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 30px;
+  padding: 8px 18px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.key-pill {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-family: var(--font-racing);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* Analog + Digital Speedometer */
+.speedometer-container {
+  position: relative;
+  width: 180px;
+  height: 180px;
+}
+
+.gauge-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.speedo-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-10deg);
+}
+
+.gauge-bg {
+  stroke: rgba(255, 255, 255, 0.1);
+}
+
+.gauge-fill {
+  stroke: var(--primary-accent);
+  stroke-dasharray: 440;
+  stroke-dashoffset: 440;
+  transition: stroke-dashoffset 0.08s ease-out, stroke 0.3s ease;
+  filter: drop-shadow(0 0 8px var(--primary-glow));
+}
+
+.speedo-data {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-top: 10px;
+}
+
+.speedo-number {
+  font-family: var(--font-racing);
+  font-size: 2.8rem;
+  font-weight: 900;
+  color: #ffffff;
+  line-height: 1;
+  letter-spacing: 1px;
+}
+
+.speedo-unit {
+  font-family: var(--font-racing);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.speedo-gear {
+  font-family: var(--font-racing);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--secondary-accent);
+  background: rgba(0, 240, 255, 0.12);
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-top: 4px;
+}
+
+/* ==========================================================================
+   Modals & Overlay Menus
+   ========================================================================== */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(4, 6, 12, 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 20px;
+  transition: opacity 0.3s ease;
+}
+
+.modal-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.modal-panel {
+  position: relative;
+  background: linear-gradient(135deg, rgba(20, 26, 38, 0.95) 0%, rgba(10, 14, 22, 0.98) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 20px;
+  padding: 40px 48px;
+  width: 100%;
+  max-width: 640px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(255, 42, 75, 0.15);
+  text-align: center;
+  overflow: hidden;
+}
+
+.glow-border {
+  border: 1px solid rgba(255, 42, 75, 0.4);
+  box-shadow: 0 0 35px rgba(255, 42, 75, 0.25);
+}
+
+.racing-stripes {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: linear-gradient(90deg, var(--secondary-accent) 0%, var(--primary-accent) 50%, var(--warning-accent) 100%);
+}
+
+.game-title {
+  font-family: var(--font-racing);
+  font-size: 2.8rem;
+  font-weight: 900;
+  letter-spacing: 4px;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.accent-text {
+  color: var(--primary-accent);
+  text-shadow: 0 0 20px var(--primary-glow);
+}
+
+.game-subtitle {
+  font-family: var(--font-racing);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: var(--secondary-accent);
+  margin-bottom: 28px;
+}
+
+/* Controls Grid */
+.controls-guide {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 28px;
+  text-align: left;
+}
+
+.ctrl-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #cfd9ec;
+}
+
+.ctrl-badge {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-family: var(--font-racing);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #fff;
+  min-width: 60px;
+  text-align: center;
+}
+
+/* Buttons */
+.menu-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.menu-actions.vertical {
+  flex-direction: column;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+.btn {
+  font-family: var(--font-racing);
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  padding: 14px 32px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+  pointer-events: auto;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #ff2a4b 0%, #d80027 100%);
+  color: #fff;
+  box-shadow: 0 6px 24px rgba(255, 42, 75, 0.45);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 32px rgba(255, 42, 75, 0.7);
+  background: linear-gradient(135deg, #ff4463 0%, #ea0c34 100%);
+}
+
+.btn-primary:active {
+  transform: translateY(1px);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.pulse-btn {
+  animation: pulseButton 2s infinite;
+}
+
+@keyframes pulseButton {
+  0% { box-shadow: 0 0 0 0 rgba(255, 42, 75, 0.6); }
+  70% { box-shadow: 0 0 0 16px rgba(255, 42, 75, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 42, 75, 0); }
+}
+
+.features-row {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* ==========================================================================
+   Finish Results Screen & Leaderboard
+   ========================================================================== */
+
+.finish-panel {
+  max-width: 700px;
+}
+
+.finish-banner {
+  margin-bottom: 24px;
+}
+
+.finish-title {
+  font-family: var(--font-racing);
+  font-size: 2.8rem;
+  font-weight: 900;
+  letter-spacing: 4px;
+  color: #fff;
+}
+
+.finish-position {
+  font-family: var(--font-racing);
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: var(--secondary-accent);
+  text-shadow: 0 0 20px var(--secondary-glow);
+  margin-top: 4px;
+}
+
+.results-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-box {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.stat-label {
+  font-family: var(--font-racing);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  font-family: var(--font-racing);
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: #fff;
+}
+
+.leaderboard-section {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 18px 24px;
+  margin-bottom: 28px;
+  text-align: left;
+}
+
+.leaderboard-section h3 {
+  font-family: var(--font-racing);
+  font-size: 0.9rem;
+  letter-spacing: 2px;
+  color: var(--secondary-accent);
+  margin-bottom: 12px;
+}
+
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.leaderboard-table th {
+  font-family: var(--font-racing);
+  font-size: 0.7rem;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.leaderboard-table td {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.leaderboard-table tr.player-row {
+  background: rgba(255, 42, 75, 0.18);
+  color: #fff;
+  font-weight: 700;
+}
+
+.leaderboard-table tr.player-row td:first-child {
+  color: var(--primary-accent);
+  font-family: var(--font-racing);
+}
+
+/* ==========================================================================
+   Responsive Adaptations
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  .hud {
+    padding: 14px 16px;
+  }
+  .hud-value {
+    font-size: 1.4rem;
+  }
+  .hud-controls-helper {
+    display: none;
+  }
+  .modal-panel {
+    padding: 28px 20px;
+  }
+  .game-title {
+    font-size: 2rem;
+  }
+  .controls-guide {
+    grid-template-columns: 1fr;
+  }
+  .speedometer-container {
+    width: 140px;
+    height: 140px;
+  }
+  .speedo-number {
+    font-size: 2.1rem;
+  }
+}
