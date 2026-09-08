@@ -1,12 +1,17 @@
 # 🏎️ APEX VELOCITY 3D - Pro Arcade Racing Championship
 
+> 🌐 **Live Demo (Play Online):** [https://icoderandomly.github.io/APEX-VELOCITY-3D/](https://icoderandomly.github.io/APEX-VELOCITY-3D/)
+
 A fast-paced 3D circuit racing game built with **Three.js, HTML5, and CSS3**. Experience arcade physics with momentum, high-speed drifting, dynamic lighting, intelligent AI opponents, procedural sports cars, a 3D undulating race track, procedural Web Audio sound synthesis, and a racing HUD.
 
 ---
 
 ## 🚀 How to Play
 
-### Option 1: Live Dev Server (Recommended)
+### Option 1: Play in Browser (Instant)
+- Visit the live site: **[https://icoderandomly.github.io/APEX-VELOCITY-3D/](https://icoderandomly.github.io/APEX-VELOCITY-3D/)**
+
+### Option 2: Live Local Dev Server
 1. Double-click `start.bat` **OR** run in terminal:
    ```bash
    npm run dev
