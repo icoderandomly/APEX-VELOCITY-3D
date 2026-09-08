@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>APEX VELOCITY 3D - High Speed Circuit Racing</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+  <script type="module" crossorigin src="./assets/index-DbrargK2.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-qxsghMRW.css">
+</head>
+<body>
+  <!-- 3D WebGL Canvas -->
+  <div id="game-container">
+    <canvas id="game-canvas"></canvas>
+  </div>
+
+  <!-- Radial Speed Lines Overlay -->
+  <div id="speed-lines" class="speed-lines"></div>
+
+  <!-- Screen Collision Flash Overlay -->
+  <div id="collision-flash" class="collision-flash"></div>
+
+  <!-- Heads-Up Display (HUD) -->
+  <div id="hud" class="hud hidden">
+    <!-- Top Stats Bar -->
+    <header class="hud-top">
+      <div class="hud-card lap-badge">
+        <span class="hud-label">LAP</span>
+        <span id="hud-lap" class="hud-value">1<span class="hud-sub">/3</span></span>
+      </div>
+
+      <div class="hud-card timer-card">
+        <div class="timer-main">
+          <span class="hud-label">RACE TIME</span>
+          <span id="hud-timer" class="hud-value timer-digits">00:00.00</span>
+        </div>
+        <div class="timer-sub">
+          <span class="hud-label-sm">BEST LAP:</span>
+          <span id="hud-best-lap" class="hud-value-sm">--:--.--</span>
+        </div>
+      </div>
+
+      <div class="hud-card pos-badge">
+        <span class="hud-label">POSITION</span>
+        <span id="hud-pos" class="hud-value pos-highlight">1<span class="hud-sub">/5</span></span>
+      </div>
+    </header>
+
+    <!-- Center Alerts & Messages -->
+    <div class="hud-center">
+      <div id="countdown-banner" class="countdown-banner hidden">
+        <span id="countdown-text" class="countdown-text">3</span>
+      </div>
+      <div id="drift-notification" class="drift-notification hidden">
+        <span class="drift-title">DRIFT</span>
+        <span id="drift-points" class="drift-pts">+150</span>
+      </div>
+      <div id="wrong-way-banner" class="wrong-way-banner hidden">
+        <span>WRONG WAY! TURN AROUND</span>
+      </div>
+      <div id="lap-announcement" class="lap-announcement hidden">
+        <span id="lap-announcement-text">FINAL LAP!</span>
+      </div>
+    </div>
+
+    <!-- Bottom Dashboard -->
+    <footer class="hud-bottom">
+      <!-- Mini Map -->
+      <div class="minimap-container hud-card">
+        <div class="minimap-title">TRACK RADAR</div>
+        <canvas id="minimap-canvas" width="160" height="160"></canvas>
+      </div>
+
+      <!-- Controls Reminder -->
+      <div class="hud-controls-helper">
+        <span class="key-pill">W / ↑</span> ACCEL
+        <span class="key-pill">S / ↓</span> BRAKE
+        <span class="key-pill">A / D</span> STEER
+        <span class="key-pill">SPACE</span> DRIFT
+        <span class="key-pill">R</span> RESET
+        <span class="key-pill">ESC</span> PAUSE
+      </div>
+
+      <!-- Speedometer & Tachometer -->
+      <div class="speedometer-container">
+        <div class="gauge-wrapper">
+          <svg class="speedo-svg" viewBox="0 0 200 200">
+            <!-- Background Arc Track -->
+            <path class="gauge-bg" d="M 30 150 A 80 80 0 1 1 170 150" fill="none" stroke-width="12" stroke-linecap="round"/>
+            <!-- Active Speed Arc -->
+            <path id="gauge-fill" class="gauge-fill" d="M 30 150 A 80 80 0 1 1 170 150" fill="none" stroke-width="12" stroke-linecap="round"/>
+          </svg>
+          <div class="speedo-data">
+            <div id="hud-speed" class="speedo-number">0</div>
+            <div class="speedo-unit">KM/H</div>
+            <div id="hud-gear" class="speedo-gear">GEAR 1</div>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Start Menu Modal -->
+  <div id="start-screen" class="modal-overlay">
+    <div class="modal-panel glow-border">
+      <div class="racing-stripes"></div>
+      <h1 class="game-title">APEX VELOCITY <span class="accent-text">3D</span></h1>
+      <p class="game-subtitle">PRO ARCADE CIRCUIT CHAMPIONSHIP</p>
+
+      <div class="controls-guide">
+        <div class="control-col">
+          <div class="ctrl-item"><span class="ctrl-badge">W / ↑</span> <span>Accelerate</span></div>
+          <div class="ctrl-item"><span class="ctrl-badge">S / ↓</span> <span>Brake / Reverse</span></div>
+          <div class="ctrl-item"><span class="ctrl-badge">A / D / ← / →</span> <span>Steering</span></div>
+        </div>
+        <div class="control-col">
+          <div class="ctrl-item"><span class="ctrl-badge">SPACE</span> <span>Handbrake / Drift</span></div>
+          <div class="ctrl-item"><span class="ctrl-badge">R</span> <span>Reset Car to Track</span></div>
+          <div class="ctrl-item"><span class="ctrl-badge">ESC / P</span> <span>Pause Game</span></div>
+        </div>
+      </div>
+
+      <div class="menu-actions">
+        <button id="btn-start" class="btn btn-primary pulse-btn">START RACE</button>
+        <button id="btn-toggle-audio" class="btn btn-secondary">🔊 SOUND: ON</button>
+      </div>
+
+      <div class="features-row">
+        <span>⚡ 3 Laps Championship</span>
+        <span>🏎️ 4 AI Competitors</span>
+        <span>🏁 Catmull-Rom 3D Circuit</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pause Modal -->
+  <div id="pause-screen" class="modal-overlay hidden">
+    <div class="modal-panel">
+      <h2 class="modal-title">GAME PAUSED</h2>
+      <div class="menu-actions vertical">
+        <button id="btn-resume" class="btn btn-primary">RESUME RACE</button>
+        <button id="btn-pause-restart" class="btn btn-secondary">RESTART RACE</button>
+        <button id="btn-pause-sound" class="btn btn-secondary">🔊 SOUND: ON</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Race Finished Screen -->
+  <div id="finish-screen" class="modal-overlay hidden">
+    <div class="modal-panel finish-panel glow-border">
+      <div id="finish-banner" class="finish-banner">
+        <h2 id="finish-title" class="finish-title">VICTORY!</h2>
+        <div id="finish-position" class="finish-position">1ST PLACE</div>
+      </div>
+
+      <div class="results-stats">
+        <div class="stat-box">
+          <span class="stat-label">TOTAL TIME</span>
+          <span id="final-total-time" class="stat-value">01:45.32</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">BEST LAP</span>
+          <span id="final-best-lap" class="stat-value">00:32.18</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">TOP SPEED</span>
+          <span id="final-top-speed" class="stat-value">195 KM/H</span>
+        </div>
+      </div>
+
+      <div class="leaderboard-section">
+        <h3>FINAL STANDINGS</h3>
+        <table class="leaderboard-table">
+          <thead>
+            <tr>
+              <th>POS</th>
+              <th>DRIVER</th>
+              <th>CAR</th>
+              <th>TOTAL TIME</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboard-body">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="menu-actions">
+        <button id="btn-restart" class="btn btn-primary pulse-btn">PLAY AGAIN</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
